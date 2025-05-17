@@ -13,7 +13,7 @@
     "dev": "quasar dev",
     "build": "quasar build",
     "postinstall": "quasar prepare",
-    "deploy": "quasar build && gh-pages -d dist/spa"
+    "deploy": "gh-pages -d dist/spa"
   },
   "dependencies": {
     "@quasar/extras": "^1.16.4",
@@ -34,6 +34,7 @@
     "autoprefixer": "^10.4.2",
     "eslint": "^9.26.0",
     "eslint-plugin-vue": "^9.30.0",
+    "gh-pages": "^6.3.0",
     "globals": "^15.12.0",
     "postcss": "^8.4.14",
     "prettier": "^3.3.3",
