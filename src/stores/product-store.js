@@ -1,70 +1,56 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
 import { Notify } from 'quasar'
+
+const API_URL = 'http://localhost:3001/api/products'
 
 export const useProductStore = defineStore('productStore', {
   state: () => ({
-    products: [
-      { id: 1, name: 'Produto A', quantity: 10 },
-      { id: 2, name: 'Produto B', quantity: 5 },
-    ],
-    salesHistory: JSON.parse(localStorage.getItem('salesHistory')) || [], // Histórico de vendas
+    products: [],
   }),
 
-  getters: {
-    availableProducts: (state) => state.products.filter((product) => product.quantity > 0),
-  },
-
   actions: {
-    sellProduct(productId, quantity, price) {
-      const product = this.products.find((p) => p.id === productId)
-      if (product && product.quantity >= quantity) {
-        product.quantity -= quantity
-        const sale = {
-          id: Date.now(),
-          name: product.name,
-          quantity,
-          price,
-          total: quantity * price,
-          date: new Date().toLocaleString(),
+    async loadProducts() {
+      try {
+        const { data } = await axios.get(API_URL)
+        this.products = data
+      } catch {
+        Notify.create({ type: 'negative', message: 'Erro ao carregar produtos.' })
+      }
+    },
+    async addProduct(product) {
+      try {
+        await axios.post(API_URL, product)
+        await this.loadProducts()
+        Notify.create({ type: 'positive', message: `Produto "${product.name}" adicionado!` })
+      } catch {
+        Notify.create({ type: 'negative', message: 'Erro ao adicionar produto.' })
+      }
+    },
+    async deleteProduct(productId) {
+      try {
+        await axios.delete(`${API_URL}/${productId}`)
+        await this.loadProducts()
+        Notify.create({ type: 'positive', message: 'Produto excluído com sucesso!' })
+      } catch {
+        Notify.create({ type: 'negative', message: 'Erro ao excluir produto.' })
+      }
+    },
+    async restockProduct(productId, quantity) {
+      try {
+        const product = this.products.find((p) => p.id === productId)
+        if (!product) {
+          Notify.create({ type: 'negative', message: 'Produto não encontrado.' })
+          return
         }
-        this.salesHistory.push(sale)
-        localStorage.setItem('salesHistory', JSON.stringify(this.salesHistory))
-        localStorage.setItem('products', JSON.stringify(this.products))
-      } else {
-        throw new Error('Quantidade insuficiente no estoque.')
-      }
-    },
-    restockProduct(productId, quantity) {
-      const product = this.products.find((p) => p.id === productId)
-      if (product) {
-        product.quantity += quantity
-        localStorage.setItem('products', JSON.stringify(this.products))
-        Notify.create({
-          type: 'positive',
-          message: `Produto "${product.name}" reabastecido com sucesso!`,
+        await axios.put(`${API_URL}/${productId}`, {
+          quantity: product.quantity + quantity,
         })
+        await this.loadProducts()
+        Notify.create({ type: 'positive', message: `Produto "${product.name}" reabastecido!` })
+      } catch {
+        Notify.create({ type: 'negative', message: 'Erro ao reabastecer produto.' })
       }
-    },
-    addProduct(product) {
-      const newId = this.products.length ? Math.max(...this.products.map((p) => p.id)) + 1 : 1
-      this.products.push({ id: newId, ...product })
-      localStorage.setItem('products', JSON.stringify(this.products))
-      Notify.create({
-        type: 'positive',
-        message: `Produto "${product.name}" adicionado com sucesso!`,
-      })
-    },
-    deleteProduct(productId) {
-      this.products = this.products.filter((product) => product.id !== productId)
-      localStorage.setItem('products', JSON.stringify(this.products))
-      Notify.create({
-        type: 'positive',
-        message: 'Produto excluído com sucesso!',
-      })
-    },
-    loadProducts() {
-      this.products = JSON.parse(localStorage.getItem('products')) || []
-      this.salesHistory = JSON.parse(localStorage.getItem('salesHistory')) || []
     },
   },
 })

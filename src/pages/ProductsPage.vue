@@ -180,29 +180,8 @@ const filter = ref('Todos')
 const newProduct = ref({ name: '', quantity: 0 })
 const productForm = ref(null)
 
-// Produtos reais de loja de roupas (adicione apenas se a lista estiver vazia)
-onMounted(() => {
-  productStore.loadProducts()
-  if (productStore.products.length === 0) {
-    const produtosRoupas = [
-      { name: 'Camiseta Básica Branca', quantity: 20 },
-      { name: 'Calça Jeans Skinny', quantity: 15 },
-      { name: 'Vestido Floral Curto', quantity: 10 },
-      { name: 'Blusa de Tricô Feminina', quantity: 8 },
-      { name: 'Jaqueta Jeans Masculina', quantity: 6 },
-      { name: 'Shorts Jeans Feminino', quantity: 12 },
-      { name: 'Camisa Social Masculina', quantity: 9 },
-      { name: 'Saia Midi Plissada', quantity: 7 },
-      { name: 'Blazer Alfaiataria', quantity: 5 },
-      { name: 'Regata Canelada', quantity: 18 },
-      { name: 'Moletom Capuz Unissex', quantity: 13 },
-      { name: 'Calça Legging Preta', quantity: 14 },
-      { name: 'Macacão Pantacourt', quantity: 4 },
-      { name: 'Cropped Manga Longa', quantity: 11 },
-      { name: 'Camisa Polo Masculina', quantity: 10 },
-    ]
-    produtosRoupas.forEach((prod) => productStore.addProduct(prod))
-  }
+onMounted(async () => {
+  await productStore.loadProducts()
 })
 
 const filteredProducts = computed(() => {
@@ -220,13 +199,9 @@ const outOfStockProducts = computed(() => {
   return productStore.products.filter((product) => product.quantity === 0)
 })
 
-function addProduct() {
+async function addProduct() {
   if (productForm.value.validate()) {
-    productStore.addProduct(newProduct.value)
-    Notify.create({
-      type: 'positive',
-      message: `Produto "${newProduct.value.name}" adicionado com sucesso!`,
-    })
+    await productStore.addProduct(newProduct.value)
     newProduct.value = { name: '', quantity: 0 }
     productForm.value.resetValidation()
   }
@@ -242,10 +217,6 @@ function deleteProduct(productId) {
     return
   }
   productStore.deleteProduct(productId)
-  Notify.create({
-    type: 'positive',
-    message: `Produto "${product.name}" excluído com sucesso!`,
-  })
 }
 
 function restock(productId) {
@@ -281,10 +252,6 @@ function restock(productId) {
         return
       }
       productStore.restockProduct(productId, parsedQuantity)
-      Notify.create({
-        type: 'positive',
-        message: `Produto "${product.name}" reabastecido com sucesso!`,
-      })
     })
     .onCancel(() => {
       Notify.create({

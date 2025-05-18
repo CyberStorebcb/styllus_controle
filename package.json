@@ -13,16 +13,22 @@
     "dev": "quasar dev",
     "build": "quasar build",
     "postinstall": "quasar prepare",
-    "deploy": "gh-pages -d dist/spa"
+    "deploy": "gh-pages -d dist/spa",
+    "postbuild": "node scripts/generate-version.js"
   },
   "dependencies": {
     "@quasar/extras": "^1.16.4",
-    "axios": "^1.2.1",
+    "axios": "^1.9.0",
     "chart.js": "^4.4.9",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
     "gerencianet": "^1.0.3",
+    "pg": "^8.16.0",
+    "pg-hstore": "^2.3.4",
     "pinia": "^3.0.2",
     "qrcode": "^1.5.4",
     "quasar": "^2.16.0",
+    "sequelize": "^6.37.7",
     "typescript": "^5.8.3",
     "vue": "^3.4.18",
     "vue-router": "^4.0.0"
@@ -36,13 +42,26 @@
     "eslint-plugin-vue": "^9.30.0",
     "gh-pages": "^6.3.0",
     "globals": "^15.12.0",
+    "nodemon": "^3.1.10",
     "postcss": "^8.4.14",
     "prettier": "^3.3.3",
-    "vite-plugin-checker": "^0.9.0"
+    "vite-plugin-checker": "^0.9.0",
+    "vite-plugin-package-version": "^1.1.0"
   },
   "engines": {
     "node": "^28 || ^26 || ^24 || ^22 || ^20 || ^18",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
-  }
+  },
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CyberStorebcb/styllus_controle.git"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CyberStorebcb/styllus_controle/issues"
+  },
+  "homepage": "https://github.com/CyberStorebcb/styllus_controle#readme"
 }

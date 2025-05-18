@@ -98,12 +98,23 @@
           </q-form>
         </q-card-section>
       </q-card>
+
+      <!-- Gráfico de Barras -->
+      <q-card flat bordered class="q-mb-lg investments-card">
+        <q-card-section>
+          <div class="text-h6 text-weight-bold q-mb-md text-white">
+            <q-icon name="bar_chart" color="primary" class="q-mr-sm" />
+            Gráfico de Investimentos
+          </div>
+          <canvas ref="barChart"></canvas>
+        </q-card-section>
+      </q-card>
     </div>
   </q-page>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { Notify } from 'quasar'
 import {
   Chart,
@@ -161,50 +172,44 @@ const totalInvested = computed(() =>
 const barChart = ref(null)
 let barChartInstance = null
 
-function updateBarChart() {
+async function updateBarChart() {
+  await nextTick()
   if (!barChart.value) return
-  const labels = Object.keys(investedByMonth.value)
-  const data = Object.values(investedByMonth.value)
-  if (barChartInstance) {
-    barChartInstance.data.labels = labels
-    barChartInstance.data.datasets[0].data = data
-    barChartInstance.update()
-  }
+  if (barChartInstance) barChartInstance.destroy()
+  barChartInstance = new Chart(barChart.value, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(investedByMonth.value),
+      datasets: [
+        {
+          label: 'Valor Investido',
+          data: Object.values(investedByMonth.value),
+          backgroundColor: '#1976d2',
+          borderRadius: 12,
+          borderSkipped: false,
+          hoverBackgroundColor: '#1565c0',
+          barPercentage: 0.6,
+          categoryPercentage: 0.6,
+          shadowOffsetX: 2,
+          shadowOffsetY: 2,
+          shadowBlur: 8,
+          shadowColor: '#1976d233',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#374151' } },
+        x: { grid: { color: '#374151' } },
+      },
+    },
+  })
 }
 
 onMounted(() => {
-  if (barChart.value) {
-    barChartInstance = new Chart(barChart.value, {
-      type: 'bar',
-      data: {
-        labels: Object.keys(investedByMonth.value),
-        datasets: [
-          {
-            label: 'Valor Investido',
-            data: Object.values(investedByMonth.value),
-            backgroundColor: '#1976d2',
-            borderRadius: 12,
-            borderSkipped: false,
-            hoverBackgroundColor: '#1565c0',
-            barPercentage: 0.6,
-            categoryPercentage: 0.6,
-            shadowOffsetX: 2,
-            shadowOffsetY: 2,
-            shadowBlur: 8,
-            shadowColor: '#1976d233',
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { beginAtZero: true, grid: { color: '#374151' } },
-          x: { grid: { color: '#374151' } },
-        },
-      },
-    })
-  }
+  updateBarChart()
 })
 
 watch(investedByMonth, updateBarChart)

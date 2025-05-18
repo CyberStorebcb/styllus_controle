@@ -5,15 +5,31 @@
         <q-icon name="dashboard" color="primary" size="36px" class="q-mr-sm" />
         Dashboard Geral
       </div>
+      <!-- Botão de atualizar -->
+      <div class="row justify-end q-mb-md">
+        <q-btn
+          color="primary"
+          icon="refresh"
+          label="Atualizar"
+          @click="refreshDashboard"
+          :loading="loading"
+          unelevated
+        />
+      </div>
       <div class="dashboard-cards q-gutter-md row wrap justify-center">
-        <q-card class="dashboard-card col-xs-12 col-sm-6 col-md-3">
+        <q-card class="dashboard-card col-12 col-sm-6 col-md-3">
           <q-card-section>
             <div class="dashboard-card-title">
               <q-icon name="shopping_cart" color="primary" size="28px" class="q-mr-sm" />
               Produtos
             </div>
-            <div class="dashboard-card-value">{{ productsCount }}</div>
-            <div class="dashboard-card-desc">Cadastrados</div>
+            <div class="dashboard-card-value">
+              <q-skeleton v-if="loading" type="text" width="60px" />
+              <template v-else>{{ productsCount }}</template>
+            </div>
+            <div class="dashboard-card-desc">
+              {{ productsCount === 1 ? 'Cadastrado' : 'Cadastrados' }}
+            </div>
           </q-card-section>
         </q-card>
         <q-card class="dashboard-card col-xs-12 col-sm-6 col-md-3">
@@ -68,7 +84,10 @@
               <q-icon name="pie_chart" color="deep-orange" size="24px" class="q-mr-sm" />
               Distribuição de Produtos
             </div>
-            <canvas ref="productsChart"></canvas>
+            <div v-if="!prodData.length" class="text-grey text-center q-mt-md">
+              Nenhum produto cadastrado.
+            </div>
+            <canvas v-if="prodData.length" ref="productsChart"></canvas>
           </q-card-section>
         </q-card>
       </div>
@@ -77,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useProductStore } from 'src/stores/product-store'
 import { useReportStore } from 'src/stores/report-store'
 import { useInvestmentStore } from 'src/stores/investment-store'
@@ -114,65 +133,91 @@ const productsCount = ref(0)
 const reportsCount = ref(0)
 const totalInvestments = ref(0)
 const totalSales = ref(0)
+const loading = ref(true)
 
 const salesChart = ref(null)
+let salesChartInstance = null
 const productsChart = ref(null)
+let productsChartInstance = null
 
-onMounted(() => {
-  // Dados dinâmicos
+const prodData = ref([])
+
+async function refreshDashboard() {
+  loading.value = true
+  await new Promise((resolve) => setTimeout(resolve, 600))
   productsCount.value = productStore.products?.length || 0
   reportsCount.value = reportStore.reports?.length || 0
   totalInvestments.value = investmentStore.totalInvested || 0
   totalSales.value = salesStore.totalSalesValue || 0
+  prodData.value = productStore.products?.slice(0, 5) || []
+  await renderCharts()
+  loading.value = false
+}
 
-  // Gráfico de vendas dos últimos 7 dias
-  const salesData = salesStore.getSalesLast7Days?.() || [
-    { date: 'Seg', value: 10 },
-    { date: 'Ter', value: 20 },
-    { date: 'Qua', value: 15 },
-    { date: 'Qui', value: 30 },
-    { date: 'Sex', value: 25 },
-    { date: 'Sáb', value: 18 },
-    { date: 'Dom', value: 12 },
-  ]
-  new Chart(salesChart.value, {
-    type: 'bar',
-    data: {
-      labels: salesData.map((d) => d.date),
-      datasets: [
-        {
-          label: 'Vendas',
-          data: salesData.map((d) => d.value),
-          backgroundColor: '#1976d2',
-          borderRadius: 8,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } },
-    },
-  })
+async function renderCharts() {
+  await nextTick()
+  if (salesChartInstance) salesChartInstance.destroy()
+  if (productsChartInstance) productsChartInstance.destroy()
 
-  // Gráfico de distribuição de produtos
-  const prodData = productStore.products?.slice(0, 5) || []
-  new Chart(productsChart.value, {
-    type: 'pie',
-    data: {
-      labels: prodData.map((p) => p.name),
-      datasets: [
-        {
-          data: prodData.map((p) => p.quantity),
-          backgroundColor: ['#1976d2', '#43a047', '#fb8c00', '#8e24aa', '#e53935'],
+  try {
+    // Gráfico de vendas dos últimos 7 dias
+    const salesData = salesStore.getSalesLast7Days?.() || [
+      { date: 'Seg', value: 10 },
+      { date: 'Ter', value: 20 },
+      { date: 'Qua', value: 15 },
+      { date: 'Qui', value: 30 },
+      { date: 'Sex', value: 25 },
+      { date: 'Sáb', value: 18 },
+      { date: 'Dom', value: 12 },
+    ]
+    if (salesChart.value) {
+      salesChartInstance = new Chart(salesChart.value, {
+        type: 'bar',
+        data: {
+          labels: salesData.map((d) => d.date),
+          datasets: [
+            {
+              label: 'Vendas',
+              data: salesData.map((d) => d.value),
+              backgroundColor: '#1976d2',
+              borderRadius: 8,
+            },
+          ],
         },
-      ],
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'bottom' } },
-    },
-  })
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } },
+        },
+      })
+    }
+
+    // Gráfico de distribuição de produtos
+    if (productsChart.value && prodData.value.length) {
+      productsChartInstance = new Chart(productsChart.value, {
+        type: 'pie',
+        data: {
+          labels: prodData.value.map((p) => p.name),
+          datasets: [
+            {
+              data: prodData.value.map((p) => p.quantity),
+              backgroundColor: ['#1976d2', '#43a047', '#fb8c00', '#8e24aa', '#e53935'],
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } },
+        },
+      })
+    }
+  } catch (err) {
+    console.error('Erro ao renderizar gráficos:', err)
+  }
+}
+
+onMounted(async () => {
+  await refreshDashboard()
 })
 </script>
 
