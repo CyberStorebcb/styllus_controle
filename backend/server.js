@@ -17,7 +17,7 @@ sequelize
   })
   .then(() => {
     app.listen(3001, () => {
-      console.log('API rodando em http://localhost:3001/api/products')
+      console.log('http://localhost:3001/api/products')
     })
   })
   .catch((err) => {

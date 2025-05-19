@@ -7,7 +7,9 @@
           <q-icon name="account_balance_wallet" color="green" size="40px" class="q-mr-md" />
           <div>
             <div class="text-h6 text-weight-bold text-white">Total Investido</div>
-            <div class="text-h4 text-green-3 q-mt-xs">R$ {{ totalInvested }}</div>
+            <div class="text-h4 text-green-3 q-mt-xs">
+              R$ {{ totalInvested.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}
+            </div>
           </div>
         </q-card-section>
       </q-card>
@@ -114,7 +116,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Notify } from 'quasar'
 import {
   Chart,
@@ -135,18 +137,21 @@ const newInvestment = ref({
   date: '',
 })
 
+function notify(type, message) {
+  Notify.create({ type, message })
+}
+
 function investNow() {
   if (!newInvestment.value.amount || !newInvestment.value.date) {
-    Notify.create({ type: 'negative', message: 'Preencha todos os campos corretamente.' })
+    notify('negative', 'Preencha todos os campos corretamente.')
     return
   }
   investments.value.push({
     amount: Number(newInvestment.value.amount),
     date: newInvestment.value.date,
   })
-  Notify.create({ type: 'positive', message: 'Investimento registrado!' })
+  notify('positive', 'Investimento registrado!')
   newInvestment.value = { amount: 0, date: '' }
-  updateBarChart()
 }
 
 // Agrupa o valor investido por mês/ano
@@ -163,9 +168,7 @@ const investedByMonth = computed(() => {
 })
 
 const totalInvested = computed(() =>
-  investments.value
-    .reduce((sum, inv) => sum + Number(inv.amount), 0)
-    .toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+  investments.value.reduce((sum, inv) => sum + Number(inv.amount), 0),
 )
 
 // Gráfico de barras
@@ -176,6 +179,7 @@ async function updateBarChart() {
   await nextTick()
   if (!barChart.value) return
   if (barChartInstance) barChartInstance.destroy()
+  if (Object.keys(investedByMonth.value).length === 0) return
   barChartInstance = new Chart(barChart.value, {
     type: 'bar',
     data: {
@@ -186,14 +190,9 @@ async function updateBarChart() {
           data: Object.values(investedByMonth.value),
           backgroundColor: '#1976d2',
           borderRadius: 12,
-          borderSkipped: false,
           hoverBackgroundColor: '#1565c0',
           barPercentage: 0.6,
           categoryPercentage: 0.6,
-          shadowOffsetX: 2,
-          shadowOffsetY: 2,
-          shadowBlur: 8,
-          shadowColor: '#1976d233',
         },
       ],
     },
@@ -208,8 +207,9 @@ async function updateBarChart() {
   })
 }
 
-onMounted(() => {
-  updateBarChart()
+onMounted(updateBarChart)
+onUnmounted(() => {
+  if (barChartInstance) barChartInstance.destroy()
 })
 
 watch(investedByMonth, updateBarChart)

@@ -2,18 +2,24 @@ const express = require('express')
 const router = express.Router()
 const Product = require('../models/Product')
 
+// State
+
 // Listar todos
 router.get('/', async (req, res) => {
-  const products = await Product.findAll()
-  res.json(products)
+  try {
+    const products = await Product.findAll()
+    res.json(products)
+  } catch {
+    res.status(500).json({ error: 'Erro ao buscar produtos' })
+  }
 })
 
 // Adicionar
 router.post('/', async (req, res) => {
   try {
     const { name, quantity } = req.body
-    if (!name || quantity == null) {
-      return res.status(400).json({ error: 'Nome e quantidade são obrigatórios' })
+    if (!name || quantity == null || isNaN(quantity) || quantity < 0) {
+      return res.status(400).json({ error: 'Nome e quantidade válida são obrigatórios' })
     }
     const product = await Product.create({ name, quantity })
     res.status(201).json(product)

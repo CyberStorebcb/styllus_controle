@@ -31,7 +31,7 @@ const routes = [
         path: 'sales',
         name: 'Sales',
         component: () => import('pages/SalesPage.vue'),
-        meta: { title: 'Vendas' },
+        meta: { title: 'Nova Venda' },
       },
       {
         path: 'sales/history',
@@ -55,12 +55,6 @@ const routes = [
         name: 'Payment',
         component: () => import('pages/PaymentPage.vue'),
         meta: { title: 'Pagamento' },
-      },
-      {
-        path: 'payment-history',
-        name: 'PaymentHistory',
-        component: () => import('pages/PaymentHistoryPage.vue'),
-        meta: { title: 'Histórico de Pagamentos' },
       },
     ],
   },

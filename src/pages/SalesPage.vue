@@ -1,22 +1,17 @@
 <template>
   <q-page class="sales-bg flex flex-center">
     <div class="sales-container">
-      <div class="sales-title q-mb-lg">HISTÓRICO DE VENDAS</div>
+      <div class="sales-title q-mb-lg">Nova Venda</div>
       <q-card flat bordered class="sales-card shadow-2">
         <q-card-section>
-          <div class="sales-section-title q-mb-md">Produtos Disponíveis para Venda</div>
-          <q-list v-if="products.length > 0" class="q-pa-none">
+          <div class="sales-section-title q-mb-md">Produtos Disponíveis</div>
+          <q-list v-if="Array.isArray(products) && products.length > 0" class="q-pa-none">
             <q-item
               v-for="product in products"
               :key="product.id"
               class="sales-item"
               :disable="product.quantity === 0"
             >
-              <q-item-section avatar>
-                <div class="sales-avatar">
-                  <q-icon name="radio" color="white" size="32px" />
-                </div>
-              </q-item-section>
               <q-item-section>
                 <q-item-label class="custom-font-bold sales-product-name">
                   {{ product.name }}
@@ -44,48 +39,6 @@
             <p class="custom-font-light text-grey">Nenhum produto disponível para venda.</p>
           </div>
         </q-card-section>
-        <q-separator spaced />
-        <q-card-actions align="center">
-          <q-btn
-            color="secondary"
-            icon="history"
-            label="Ver Histórico de Vendas"
-            class="go-history-btn"
-            @click="goToHistory"
-            no-caps
-            unelevated
-          />
-        </q-card-actions>
-      </q-card>
-      <q-card flat bordered class="sales-card shadow-2 q-mt-xl">
-        <q-card-section>
-          <div class="sales-section-title q-mb-md">Histórico de Vendas Realizadas</div>
-          <q-list v-if="salesHistory.length > 0" class="q-pa-none">
-            <q-item v-for="sale in salesHistory" :key="sale.id" class="sales-item">
-              <q-item-section avatar>
-                <div class="sales-avatar sales-avatar-history">
-                  <q-icon name="check_circle" color="white" size="28px" />
-                </div>
-              </q-item-section>
-              <q-item-section>
-                <q-item-label class="custom-font-bold sales-product-name">
-                  {{ sale.name }}
-                </q-item-label>
-                <q-item-label caption class="custom-font-light sales-qty">
-                  Quantidade: {{ sale.quantity }} | Valor: R$ {{ sale.price.toFixed(2) }} | Data:
-                  {{ sale.date }}
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-          <div v-else class="text-center q-mt-md">
-            <q-icon name="history" size="lg" color="grey-6" />
-            <p class="custom-font-light text-grey">Nenhuma venda realizada ainda.</p>
-          </div>
-          <div class="text-right q-mt-md q-mb-sm text-weight-bold">
-            Total vendido: R$ {{ totalSold }}
-          </div>
-        </q-card-section>
       </q-card>
     </div>
   </q-page>
@@ -95,17 +48,9 @@
 import { useProductStore } from 'src/stores/product-store'
 import { computed } from 'vue'
 import { Notify, Dialog } from 'quasar'
-import { useRouter } from 'vue-router'
 
-const router = useRouter()
 const productStore = useProductStore()
 const products = computed(() => productStore.availableProducts)
-const salesHistory = computed(() => productStore.salesHistory || [])
-const totalSold = computed(() =>
-  salesHistory.value
-    .reduce((sum, sale) => sum + (sale.total || sale.quantity * sale.price), 0)
-    .toFixed(2),
-)
 
 function sell(productId) {
   const product = productStore.products.find((p) => p.id === productId)
@@ -119,7 +64,7 @@ function sell(productId) {
 
   Dialog.create({
     title: 'Vender Produto',
-    message: `Informe a quantidade e o preço unitário para vender o produto "${product.name}":`,
+    message: `Informe a quantidade para vender o produto "${product.name}":`,
     prompt: {
       model: '',
       type: 'number',
@@ -132,10 +77,15 @@ function sell(productId) {
   })
     .onOk((quantity) => {
       const parsedQuantity = parseInt(quantity, 10)
-      if (isNaN(parsedQuantity) || parsedQuantity <= 0 || parsedQuantity > product.quantity) {
+      if (
+        !productId ||
+        isNaN(parsedQuantity) ||
+        parsedQuantity <= 0 ||
+        parsedQuantity > product.quantity
+      ) {
         Notify.create({
           type: 'negative',
-          message: 'Quantidade inválida.',
+          message: 'Preencha todos os campos corretamente.',
         })
         return
       }
@@ -155,18 +105,57 @@ function sell(productId) {
       })
         .onOk((price) => {
           const parsedPrice = parseFloat(price)
-          if (isNaN(parsedPrice) || parsedPrice <= 0) {
+          if (!productId || isNaN(parsedPrice) || parsedPrice <= 0) {
             Notify.create({
               type: 'negative',
-              message: 'Preço inválido.',
+              message: 'Preencha todos os campos corretamente.',
             })
             return
           }
-          productStore.sellProduct(productId, parsedQuantity, parsedPrice)
-          Notify.create({
-            type: 'positive',
-            message: `Venda registrada com sucesso!`,
+
+          Dialog.create({
+            title: 'Método de Pagamento',
+            message: 'Selecione o método de pagamento:',
+            options: {
+              type: 'radio',
+              model: '',
+              items: [
+                { label: 'Dinheiro', value: 'Dinheiro' },
+                { label: 'Cartão de Crédito', value: 'Cartão de Crédito' },
+                { label: 'Cartão de Débito', value: 'Cartão de Débito' },
+                { label: 'Pix', value: 'Pix' },
+                { label: 'Boleto', value: 'Boleto' },
+              ],
+            },
+            cancel: true,
+            persistent: true,
           })
+            .onOk((method) => {
+              if (
+                !productId ||
+                !parsedPrice ||
+                !parsedQuantity ||
+                parsedQuantity <= 0 ||
+                parsedPrice <= 0
+              ) {
+                Notify.create({
+                  type: 'negative',
+                  message: 'Preencha todos os campos corretamente.',
+                })
+                return
+              }
+              productStore.sellProduct(productId, parsedQuantity, parsedPrice, method)
+              Notify.create({
+                type: 'positive',
+                message: `Venda registrada com sucesso!`,
+              })
+            })
+            .onCancel(() => {
+              Notify.create({
+                type: 'info',
+                message: 'Venda cancelada.',
+              })
+            })
         })
         .onCancel(() => {
           Notify.create({
@@ -181,11 +170,6 @@ function sell(productId) {
         message: 'Venda cancelada.',
       })
     })
-}
-
-function goToHistory() {
-  // Altere o caminho '/historico-vendas' para a rota real do seu histórico, se necessário
-  router.push({ name: 'sales-history' })
 }
 </script>
 
@@ -311,6 +295,15 @@ function goToHistory() {
 .go-history-btn:hover {
   background: #1976d2;
   color: #fff;
+}
+
+.new-sale-item {
+  margin-top: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.new-sale-item:hover {
+  background: #f0f4fa;
 }
 
 @media (max-width: 600px) {

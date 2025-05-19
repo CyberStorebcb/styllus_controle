@@ -60,6 +60,7 @@
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-6">
               <q-input
+                ref="nameInput"
                 v-model="newProduct.name"
                 label="Nome do Produto"
                 placeholder="Digite o nome do produto"
@@ -170,7 +171,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useProductStore } from 'src/stores/product-store'
 import { Notify, Dialog } from 'quasar'
 
@@ -179,14 +180,16 @@ const search = ref('')
 const filter = ref('Todos')
 const newProduct = ref({ name: '', quantity: 0 })
 const productForm = ref(null)
+const nameInput = ref(null)
 
 onMounted(async () => {
   await productStore.loadProducts()
 })
 
 const filteredProducts = computed(() => {
+  const searchTerm = search.value.toLowerCase()
   return productStore.products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(search.value.toLowerCase())
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm)
     const matchesFilter =
       filter.value === 'Todos' ||
       (filter.value === 'Disponíveis' && product.quantity > 0) ||
@@ -195,39 +198,40 @@ const filteredProducts = computed(() => {
   })
 })
 
-const outOfStockProducts = computed(() => {
-  return productStore.products.filter((product) => product.quantity === 0)
-})
+const outOfStockProducts = computed(() =>
+  productStore.products.filter((product) => product.quantity === 0),
+)
+
+function notify(type, message) {
+  Notify.create({ type, message })
+}
 
 async function addProduct() {
   if (productForm.value.validate()) {
-    await productStore.addProduct(newProduct.value)
+    await productStore.addProduct({ ...newProduct.value })
     newProduct.value = { name: '', quantity: 0 }
     productForm.value.resetValidation()
+    await nextTick()
+    // Foca no campo nome para agilidade
+    if (nameInput.value?.focus) nameInput.value.focus()
+    notify('positive', 'Produto adicionado com sucesso!')
   }
 }
 
-function deleteProduct(productId) {
-  const product = productStore.products.find((p) => p.id === productId)
-  if (!product) {
-    Notify.create({
-      type: 'negative',
-      message: 'Produto não encontrado.',
-    })
-    return
-  }
-  productStore.deleteProduct(productId)
+function getProductById(productId) {
+  return productStore.products.find((p) => p.id === productId)
+}
+
+async function deleteProduct(productId) {
+  const product = getProductById(productId)
+  if (!product) return notify('negative', 'Produto não encontrado.')
+  await productStore.deleteProduct(productId)
+  notify('positive', 'Produto removido com sucesso!')
 }
 
 function restock(productId) {
-  const product = productStore.products.find((p) => p.id === productId)
-  if (!product) {
-    Notify.create({
-      type: 'negative',
-      message: 'Produto não encontrado.',
-    })
-    return
-  }
+  const product = getProductById(productId)
+  if (!product) return notify('negative', 'Produto não encontrado.')
 
   Dialog.create({
     title: 'Reabastecer Produto',
@@ -242,34 +246,23 @@ function restock(productId) {
     cancel: true,
     persistent: true,
   })
-    .onOk((quantity) => {
+    .onOk(async (quantity) => {
       const parsedQuantity = parseInt(quantity, 10)
       if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-        Notify.create({
-          type: 'negative',
-          message: 'Quantidade inválida.',
-        })
+        notify('negative', 'Quantidade inválida.')
         return
       }
-      productStore.restockProduct(productId, parsedQuantity)
+      await productStore.restockProduct(productId, parsedQuantity)
+      notify('positive', 'Produto reabastecido!')
     })
     .onCancel(() => {
-      Notify.create({
-        type: 'info',
-        message: 'Reabastecimento cancelado.',
-      })
+      notify('info', 'Reabastecimento cancelado.')
     })
 }
 
 function confirmDelete(productId) {
-  const product = productStore.products.find((p) => p.id === productId)
-  if (!product) {
-    Notify.create({
-      type: 'negative',
-      message: 'Produto não encontrado.',
-    })
-    return
-  }
+  const product = getProductById(productId)
+  if (!product) return notify('negative', 'Produto não encontrado.')
   Dialog.create({
     title: 'Confirmar Exclusão',
     message: `Tem certeza de que deseja excluir o produto "${product.name}"?`,
@@ -278,15 +271,8 @@ function confirmDelete(productId) {
     icon: 'warning',
     color: 'red',
   })
-    .onOk(() => {
-      deleteProduct(productId)
-    })
-    .onCancel(() => {
-      Notify.create({
-        type: 'info',
-        message: 'A exclusão foi cancelada.',
-      })
-    })
+    .onOk(() => deleteProduct(productId))
+    .onCancel(() => notify('info', 'A exclusão foi cancelada.'))
 }
 </script>
 

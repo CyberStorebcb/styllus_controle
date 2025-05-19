@@ -5,7 +5,6 @@
         <q-icon name="dashboard" color="primary" size="36px" class="q-mr-sm" />
         Dashboard Geral
       </div>
-      <!-- Botão de atualizar -->
       <div class="row justify-end q-mb-md">
         <q-btn
           color="primary"
@@ -17,6 +16,7 @@
         />
       </div>
       <div class="dashboard-cards q-gutter-md row wrap justify-center">
+        <!-- Cards de resumo -->
         <q-card class="dashboard-card col-12 col-sm-6 col-md-3">
           <q-card-section>
             <div class="dashboard-card-title">
@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useProductStore } from 'src/stores/product-store'
 import { useReportStore } from 'src/stores/report-store'
 import { useInvestmentStore } from 'src/stores/investment-store'
@@ -142,9 +142,15 @@ let productsChartInstance = null
 
 const prodData = ref([])
 
+// Atualiza os dados do dashboard e gráficos
 async function refreshDashboard() {
   loading.value = true
-  await new Promise((resolve) => setTimeout(resolve, 600))
+  // Aguarda carregamento dos dados das stores, se necessário
+  if (productStore.loadProducts) await productStore.loadProducts()
+  if (reportStore.loadReports) await reportStore.loadReports()
+  if (investmentStore.loadInvestments) await investmentStore.loadInvestments()
+  if (salesStore.loadSales) await salesStore.loadSales()
+
   productsCount.value = productStore.products?.length || 0
   reportsCount.value = reportStore.reports?.length || 0
   totalInvestments.value = investmentStore.totalInvested || 0
@@ -154,6 +160,7 @@ async function refreshDashboard() {
   loading.value = false
 }
 
+// Renderiza os gráficos
 async function renderCharts() {
   await nextTick()
   if (salesChartInstance) salesChartInstance.destroy()
@@ -216,6 +223,13 @@ async function renderCharts() {
   }
 }
 
+// Destroi os gráficos ao sair da página
+onUnmounted(() => {
+  if (salesChartInstance) salesChartInstance.destroy()
+  if (productsChartInstance) productsChartInstance.destroy()
+})
+
+// Inicializa o dashboard ao montar
 onMounted(async () => {
   await refreshDashboard()
 })

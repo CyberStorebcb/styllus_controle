@@ -5,9 +5,3 @@ CREATE TABLE IF NOT EXISTS products (
   quantity INTEGER NOT NULL DEFAULT 0
 );
 
--- Inserção de produtos de exemplo
-INSERT INTO products (name, quantity) VALUES
-  ('Camiseta Polo', 10),
-  ('Calça Jeans', 5),
-  ('Tênis Esportivo', 8),
-  ('Jaqueta de Couro', 2);

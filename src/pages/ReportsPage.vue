@@ -9,13 +9,13 @@
         <div class="col-auto">
           <q-input
             v-model="selectedDate"
-            mask="##/##/####"
             filled
             dense
             class="date-input"
-            :rules="['date']"
-            :readonly="true"
+            label="Filtrar por data"
+            mask="##/##/####"
             :input-style="{ color: '#cfd8dc', fontWeight: 500 }"
+            readonly
           >
             <template #prepend>
               <q-icon name="event" color="primary" />
@@ -53,24 +53,32 @@
 </template>
 
 <script setup>
-import { useProductStore } from 'src/stores/product-store'
-import { computed, ref } from 'vue'
+import { ref, computed } from 'vue'
 import { date } from 'quasar'
+import { useSalesStore } from 'src/stores/sales-store'
 
-const productStore = useProductStore()
+const salesStore = useSalesStore()
 const today = date.formatDate(new Date(), 'DD/MM/YYYY')
 const selectedDate = ref(today)
 const showDate = ref(false)
 
-const salesHistory = computed(() => productStore.salesHistory || [])
+const sales = computed(() => salesStore.sales || [])
 
-const filteredSales = computed(() =>
-  salesHistory.value.filter((sale) => sale.date === selectedDate.value),
-)
+// Filtra vendas pela data selecionada (pode adaptar para mês/ano se quiser)
+const filteredSales = computed(() => sales.value.filter((sale) => sale.date === selectedDate.value))
 
 const columns = [
-  { name: 'name', label: 'Produto', field: 'name', align: 'left' },
-  { name: 'date', label: 'Data', field: 'date', align: 'left' },
+  { name: 'item', label: 'Produto', field: 'item', align: 'left' },
+  { name: 'date', label: 'Data', field: 'date', align: 'center' },
+  { name: 'quantity', label: 'Quantidade', field: 'quantity', align: 'center' },
+  {
+    name: 'value',
+    label: 'Valor (R$)',
+    field: (row) =>
+      Number(row.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+    align: 'center',
+  },
+  { name: 'method', label: 'Método de Pagamento', field: 'method', align: 'center' },
 ]
 </script>
 
