@@ -212,7 +212,6 @@ async function addProduct() {
     newProduct.value = { name: '', quantity: 0 }
     productForm.value.resetValidation()
     await nextTick()
-    // Foca no campo nome para agilidade
     if (nameInput.value?.focus) nameInput.value.focus()
     notify('positive', 'Produto adicionado com sucesso!')
   }
