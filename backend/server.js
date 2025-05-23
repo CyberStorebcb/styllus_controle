@@ -1,13 +1,13 @@
 const express = require('express')
 const cors = require('cors')
 const sequelize = require('./db')
-const productsRouter = require('./routes/products')
 
 const app = express()
 app.use(cors())
 app.use(express.json())
 
-app.use('/api/products', productsRouter)
+app.use('/api/products', require('./routes/products'))
+app.use('/api/sales', require('./routes/sales'))
 
 sequelize
   .authenticate()
@@ -17,7 +17,7 @@ sequelize
   })
   .then(() => {
     app.listen(3001, () => {
-      console.log('http://localhost:3001/api/products')
+      console.log('Servidor rodando em http://localhost:3001/api/products')
     })
   })
   .catch((err) => {

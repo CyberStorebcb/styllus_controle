@@ -1,5 +1,5 @@
 <template>
-  <q-page class="reports-bg flex flex-center">
+  <q-page>
     <div class="report-card q-pa-lg">
       <div class="row items-center justify-between q-mb-md report-header">
         <div class="col-auto flex items-center">

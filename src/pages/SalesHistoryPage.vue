@@ -46,18 +46,18 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-// Troque para o store correto se houver (ex: useSalesStore)
-import { useSalesStore } from 'src/stores/sales-store'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
-const salesStore = useSalesStore()
+const salesHistory = ref([])
 const loading = ref(true)
 
-const salesHistory = computed(() => salesStore.sales || [])
-
 onMounted(async () => {
-  if (salesStore.loadSales) {
-    await salesStore.loadSales()
+  try {
+    const response = await axios.get('http://localhost:3001/api/sales')
+    salesHistory.value = response.data
+  } catch {
+    salesHistory.value = []
   }
   loading.value = false
 })

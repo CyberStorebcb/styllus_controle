@@ -23,6 +23,14 @@
             class="navbar-btn"
             @click="toggleDarkMode"
           />
+          <q-btn
+            flat
+            round
+            icon="fullscreen"
+            aria-label="Tela cheia"
+            class="navbar-btn"
+            @click="goFullscreen"
+          />
         </div>
       </div>
     </q-header>
@@ -79,7 +87,6 @@
       </q-list>
     </q-drawer>
 
-    <!-- Conteúdo Principal -->
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -87,21 +94,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRoute } from 'vue-router'
-import {
-  Chart,
-  BarController,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip,
-  Legend,
-} from 'chart.js'
-
-// Registrar os componentes necessários do Chart.js
-Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 
 const leftDrawerOpen = ref(false)
 const $q = useQuasar()
@@ -115,18 +110,6 @@ onMounted(() => {
   if (savedTheme) {
     isDark.value = savedTheme === 'dark'
     $q.dark.set(isDark.value)
-  }
-
-  // Solicitar tela cheia ao abrir o site
-  const el = document.documentElement
-  if (el.requestFullscreen) {
-    el.requestFullscreen().catch(() => {})
-  } else if (el.webkitRequestFullscreen) {
-    el.webkitRequestFullscreen()
-  } else if (el.mozRequestFullScreen) {
-    el.mozRequestFullScreen()
-  } else if (el.msRequestFullscreen) {
-    el.msRequestFullscreen()
   }
 })
 
@@ -142,8 +125,6 @@ function toggleDarkMode() {
   localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
 }
 
-// Função para determinar a saudação com base no horário
-
 // Menu lateral com subsessões
 const menuItems = [
   { label: 'Início', icon: 'home', to: '/' },
@@ -157,10 +138,13 @@ const menuItems = [
       { label: 'Histórico de Vendas', icon: 'history', to: '/sales/history' },
     ],
   },
+  { label: 'Metas', icon: 'bar_chart', to: '/meta' },
   { label: 'Relatórios', icon: 'bar_chart', to: '/reports' },
   { label: 'Investimentos', icon: 'trending_up', to: '/investments' },
-  { label: 'Pagamento', icon: 'trending_up', to: '/payment' },
+  { label: 'Vendas registradas', icon: 'trending_up', to: '/payment' },
 ]
+
+// Função para determinar a saudação com base no horário
 
 // Função para manter expansão aberta se rota ativa
 function isRouteActive(item) {
@@ -168,71 +152,19 @@ function isRouteActive(item) {
   return item.children.some((sub) => route.path.startsWith(sub.to))
 }
 
-// Dados dinâmicos
-const salesTotal = ref(0)
-const stockTotal = ref(0)
-const activeClients = ref(0)
-
-// Simular carregamento de dados
-onMounted(() => {
-  setTimeout(() => {
-    salesTotal.value = 30000
-    stockTotal.value = 1500
-    activeClients.value = 400
-  }, 1000)
-})
-
-// Dados do gráfico
-const chartData = {
-  labels: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio'],
-  datasets: [
-    {
-      label: 'Vendas (R$)',
-      data: [5000, 7000, 8000, 6000, 9000],
-      backgroundColor: '#4CAF50',
-    },
-  ],
-}
-
-const chartOptions = {
-  responsive: true,
-  plugins: {
-    legend: { position: 'top' },
-    tooltip: {
-      callbacks: {
-        label: (context) => `${context.dataset.label}: R$ ${context.raw}`,
-      },
-    },
-  },
-  scales: {
-    y: { beginAtZero: true, title: { display: true, text: 'Valores (R$)' } },
-    x: { title: { display: true, text: 'Meses' } },
-  },
-}
-
-// Inicializar o gráfico
-let chartInstance = null
-onMounted(() => {
-  const canvas = document.getElementById('salesChart')
-  if (canvas) {
-    const ctx = canvas.getContext('2d')
-    chartInstance = new Chart(ctx, { type: 'bar', data: chartData, options: chartOptions })
-  } else {
-    console.error('Elemento canvas não encontrado para o gráfico.')
+// Função para entrar em tela cheia
+function goFullscreen() {
+  const el = document.documentElement
+  if (el.requestFullscreen) {
+    el.requestFullscreen().catch(() => {})
+  } else if (el.webkitRequestFullscreen) {
+    el.webkitRequestFullscreen()
+  } else if (el.mozRequestFullScreen) {
+    el.mozRequestFullScreen()
+  } else if (el.msRequestFullscreen) {
+    el.msRequestFullscreen()
   }
-})
-
-// Destruir o gráfico ao desmontar o componente
-onUnmounted(() => {
-  if (chartInstance) {
-    chartInstance.destroy()
-    chartInstance = null
-  }
-})
-
-// Dados da tabela
-
-// Função para visualizar detalhes
+}
 </script>
 
 <style scoped>

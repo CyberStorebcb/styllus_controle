@@ -1,19 +1,7 @@
-import { defineAsyncComponent } from 'vue'
-import LoadingSpinner from 'components/LoadingSpinner.vue'
-import ErrorComponent from 'components/ErrorComponent.vue'
-
-const AsyncMainLayout = defineAsyncComponent({
-  loader: () => import('layouts/MainLayout.vue'),
-  loadingComponent: LoadingSpinner,
-  errorComponent: ErrorComponent,
-  delay: 200,
-  timeout: 10000,
-})
-
 const routes = [
   {
     path: '/',
-    component: AsyncMainLayout,
+    component: () => import('layouts/MainLayout.vue'),
     children: [
       {
         path: '',
@@ -37,6 +25,11 @@ const routes = [
         path: 'sales/history',
         name: 'sales-history',
         component: () => import('pages/SalesHistoryPage.vue'),
+      },
+      {
+        path: 'meta',
+        name: 'meta',
+        component: () => import('pages/MetaPage.vue'),
       },
       {
         path: 'reports',

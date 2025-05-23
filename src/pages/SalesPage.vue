@@ -1,5 +1,5 @@
 <template>
-  <q-page class="sales-bg flex flex-center">
+  <q-page>
     <div class="sales-container">
       <div class="sales-title q-mb-lg">Nova Venda</div>
       <q-card flat bordered class="sales-card shadow-2">
@@ -45,15 +45,28 @@
 </template>
 
 <script setup>
-import { useProductStore } from 'src/stores/product-store'
-import { computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Notify, Dialog } from 'quasar'
+import axios from 'axios'
 
-const productStore = useProductStore()
-const products = computed(() => productStore.availableProducts)
+const products = ref([])
+
+async function fetchProducts() {
+  try {
+    const response = await axios.get('http://localhost:3001/api/products')
+    products.value = response.data
+  } catch {
+    Notify.create({
+      type: 'negative',
+      message: 'Erro ao buscar produtos do servidor.',
+    })
+  }
+}
+
+onMounted(fetchProducts)
 
 function sell(productId) {
-  const product = productStore.products.find((p) => p.id === productId)
+  const product = products.value.find((p) => p.id === productId)
   if (!product) {
     Notify.create({
       type: 'negative',
@@ -144,11 +157,27 @@ function sell(productId) {
                 })
                 return
               }
-              productStore.sellProduct(productId, parsedQuantity, parsedPrice, method)
-              Notify.create({
-                type: 'positive',
-                message: `Venda registrada com sucesso!`,
-              })
+              // Realiza a venda via API
+              axios
+                .post('http://localhost:3001/api/sales', {
+                  productId,
+                  quantity: parsedQuantity,
+                  price: parsedPrice,
+                  paymentMethod: method,
+                })
+                .then(() => {
+                  Notify.create({
+                    type: 'positive',
+                    message: `Venda registrada com sucesso!`,
+                  })
+                  fetchProducts() // Atualiza a lista
+                })
+                .catch(() => {
+                  Notify.create({
+                    type: 'negative',
+                    message: 'Erro ao registrar a venda.',
+                  })
+                })
             })
             .onCancel(() => {
               Notify.create({
