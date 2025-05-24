@@ -42,10 +42,15 @@ router.put('/:id', async (req, res) => {
 
 // Remover
 router.delete('/:id', async (req, res) => {
-  const product = await Product.findByPk(req.params.id)
-  if (!product) return res.status(404).json({ error: 'Produto não encontrado' })
-  await product.destroy()
-  res.json({ success: true })
+  try {
+    const product = await Product.findByPk(req.params.id)
+    if (!product) return res.status(404).json({ error: 'Produto não encontrado' })
+    await product.destroy()
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Erro ao deletar produto:', err)
+    res.status(500).json({ error: 'Erro ao deletar produto' })
+  }
 })
 
 module.exports = router

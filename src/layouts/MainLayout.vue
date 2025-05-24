@@ -11,8 +11,9 @@
           class="navbar-btn"
           @click="toggleLeftDrawer"
         />
-        <div class="row items-center">
-          <span class="navbar-logo"> <span class="navbar-logo-bold">Cyber</span> Controle</span>
+        <!-- Centralizar o nome -->
+        <div class="row items-center justify-center" style="flex: 1">
+          <span class="navbar-logo"> <span class="navbar-logo-bold">Cyber</span> Controle </span>
         </div>
         <div class="row items-center">
           <q-btn

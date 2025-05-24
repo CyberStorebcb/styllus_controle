@@ -3,7 +3,34 @@
     <div class="q-pa-md">
       <q-card flat bordered>
         <q-card-section>
-          <div class="text-h6 custom-font-bold">Vendas Registradas</div>
+          <div class="row items-center justify-between">
+            <div class="text-h6 custom-font-bold">Vendas Registradas</div>
+            <div>
+              <q-btn
+                dense
+                flat
+                color="negative"
+                label="Limpar Dia"
+                @click="limparHistorico('day')"
+              />
+              <q-btn
+                dense
+                flat
+                color="warning"
+                label="Limpar Semana"
+                @click="limparHistorico('week')"
+                class="q-ml-xs"
+              />
+              <q-btn
+                dense
+                flat
+                color="primary"
+                label="Limpar Mês"
+                @click="limparHistorico('month')"
+                class="q-ml-xs"
+              />
+            </div>
+          </div>
         </q-card-section>
         <q-card-section>
           <template v-if="loading">
@@ -48,11 +75,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { Notify } from 'quasar'
 
 const salesHistory = ref([])
 const loading = ref(true)
 
-onMounted(async () => {
+async function fetchSales() {
+  loading.value = true
   try {
     const response = await axios.get('http://localhost:3001/api/sales')
     salesHistory.value = response.data
@@ -60,7 +89,23 @@ onMounted(async () => {
     salesHistory.value = []
   }
   loading.value = false
-})
+}
+
+onMounted(fetchSales)
+
+async function limparHistorico(periodo) {
+  let url = `http://localhost:3001/api/sales/clear/${periodo}`
+  try {
+    await axios.delete(url)
+    Notify.create({
+      type: 'positive',
+      message: `Vendas do ${periodo === 'day' ? 'dia' : periodo === 'week' ? 'semana' : 'mês'} removidas!`,
+    })
+    fetchSales()
+  } catch {
+    Notify.create({ type: 'negative', message: 'Erro ao limpar histórico.' })
+  }
+}
 
 function formatCurrency(value) {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
