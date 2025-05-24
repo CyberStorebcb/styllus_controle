@@ -1,0 +1,58 @@
+
+.investments-bg[data-v-df4fb237] {
+  min-height: 100vh;
+  background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+  padding: 32px 0;
+}
+.bg-dark[data-v-df4fb237] {
+  background: #23272f !important;
+}
+.bg-light[data-v-df4fb237] {
+  background: #fff !important;
+}
+.text-dark[data-v-df4fb237] {
+  color: #23272f !important;
+}
+.investments-wrapper[data-v-df4fb237] {
+  max-width: 900px;
+  margin: auto;
+  padding: 0 12px;
+}
+.investments-card[data-v-df4fb237] {
+  border-radius: 18px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  transition:
+    background 0.3s,
+    box-shadow 0.3s;
+  margin-bottom: 24px;
+}
+.investments-list-item[data-v-df4fb237] {
+  transition: background 0.2s;
+}
+.investments-list-item[data-v-df4fb237]:hover {
+  background: rgba(33, 150, 243, 0.06);
+}
+.investments-btn[data-v-df4fb237] {
+  min-width: 180px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: box-shadow 0.2s;
+}
+.investments-btn[data-v-df4fb237]:active {
+  box-shadow: 0 2px 12px 0 #43e97b55;
+}
+.chart-container[data-v-df4fb237] {
+  width: 100%;
+  min-height: 340px;
+  max-width: 700px;
+  margin: auto;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 rgba(33, 150, 243, 0.08);
+  padding: 12px 0 0 0;
+}
+.q-input[data-v-df4fb237]:focus-within {
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 2px #1976d233;
+}
